@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFocus - 沉浸式专注与心境花园</title>
+    <!-- 一键卡片生图组件 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f2f7f4;
+            --bg-gradient: radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --accent-sage: #5b8266;
+            --accent-hover: #466650;
+            --text-main: #2d3732;
+            --text-sub: #7a8a80;
+            --border-color: rgba(91, 130, 102, 0.15);
+            --warning-color: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            transition: background 0.6s ease, border-color 0.4s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            max-width: 920px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-sage);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 920px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                grid-template-columns: 1.15fr 0.85fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: var(--accent-sage);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: #ffffff;
+            color: var(--accent-sage);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-weight: 600;
+        }
+
+        .plant-stage {
+            font-size: 4rem;
+            text-align: center;
+            margin: 5px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .timer-display {
+            font-size: 4.2rem;
+            font-weight: 300;
+            text-align: center;
+            margin: 5px 0;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+            letter-spacing: 2px;
+        }
+
+        .quote-box {
+            font-style: italic;
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 16px;
+            min-height: 20px;
+        }
+
+        .pause-warning {
+            display: none;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--warning-color);
+            background: rgba(217, 119, 6, 0.08);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .pause-warning.active { display: block; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        input, select, textarea {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            background: #ffffff;
+            border-color: var(--accent-sage);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .checkbox-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            padding: 0 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary { background: var(--accent-sage); color: #ffffff; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: rgba(0, 0, 0, 0.05); color: var(--text-main); }
+        .btn-secondary:hover { background: rgba(0, 0, 0, 0.1); }
+
+        /* 功能注解指南区 */
+        .guide-box {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 10px 12px;
+            border-left: 3px solid var(--accent-sage);
+        }
+
+        .guide-box summary { cursor: pointer; font-weight: 600; color: var(--text-main); }
+        .guide-box ul { padding-left: 14px; margin-top: 6px; line-height: 1.5; }
+
+        /* 混音控制器 */
+        .noise-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .noise-item {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .noise-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .preset-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* GitHub-style 热力图 */
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .heatmap-cell[data-level="1"] { background: #9be9a8; }
+        .heatmap-cell[data-level="2"] { background: #40c463; }
+        .heatmap-cell[data-level="3"] { background: #30a14e; }
+        .heatmap-cell[data-level="4"] { background: #216e39; }
+
+        .garden-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 8px;
+            max-height: 140px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .plant-badge {
+            width: 40px;
+            height: 40px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .ai-img-box {
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 12px;
+            border: 1px dashed var(--border-color);
+            position: relative;
+        }
+
+        .ai-img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 全屏 Zen 模式 */
+        .zen-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-gradient);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zen-overlay.active { display: flex; }
+        .zen-exit { position: absolute; top: 24px; right: 24px; width: auto; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active { display: flex; }
+        .share-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🧘‍♀️ <span id="app-title" data-i18n="title">ZenFocus 专注花园</span></div>
+        <div class="nav-tools">
+            <button class="btn-secondary" id="langBtn" style="width: auto;">EN</button>
+            <button class="btn-secondary" id="zenBtn" style="width: auto;"><span data-i18n="zen">🧘‍♂️ 沉浸</span></button>
+            <button class="btn-secondary" id="exportBtn" style="width: auto;" title="导出 JSON">📤</button>
+            <button class="btn-secondary" id="importBtn" style="width: auto;" title="导入 JSON">📥</button>
+            <input type="file" id="importFile" style="display:none;" accept=".json">
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- 左侧：核心计时区 -->
+        <div class="main-column">
+            <div class="card">
+                <h2>🌿 <span data-i18n="timer_title">专注生成器</span></h2>
+                
+                <div class="mode-selector">
+                    <button class="mode-btn active" id="modeCountdownBtn" data-i18n="mode_countdown">倒计时模式</button>
+                    <button class="mode-btn" id="modeStopwatchBtn" data-i18n="mode_stopwatch">正计时模式</button>
+                </div>
+
+                <div class="plant-stage" id="plantStage">🌱</div>
+                <div class="timer-display" id="timer">25:00</div>
+                <div class="quote-box" id="quoteBox" data-i18n="default_quote">"准备好开启一段沉浸时光了吗？"</div>
+                
+                <div class="pause-warning" id="pauseWarning">
+                    ⚠️ <span data-i18n="pause_warn">已暂停：</span><span id="pauseTimer">15:00</span> <span data-i18n="pause_loss">后未恢复将失去 1 株植物</span>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="taskInput" placeholder="你现在正在专注做什么？..." data-i18n-ph="task_ph">
+                    <input type="text" id="moodInput" placeholder="记录此刻心境 (如：焦虑、平静、疲惫)..." data-i18n-ph="mood_ph">
+                    
+                    <select id="timeSelect">
+                        <option value="1">1 分钟 (体验测试)</option>
+                        <option value="15">15 分钟 (快速冲刺)</option>
+                        <option value="25" selected>25 分钟 (标准番茄钟)</option>
+                        <option value="45">45 分钟 (深度专注)</option>
+                        <option value="60">60 分钟 (极限思维)</option>
+                    </select>
+
+                    <div class="checkbox-options">
+                        <label><input type="checkbox" id="soundToggle" checked> <span data-i18n="sound_toggle">结束音效提示</span></label>
+                        <label><input type="checkbox" id="aiToggle"> <span data-i18n="ai_toggle">生成 AI 意境图</span></label>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-primary" id="startBtn" data-i18n="start">开始专注</button>
+                    <button class="btn-secondary" id="finishBtn" style="display: none;" data-i18n="finish">完成并收割</button>
+                    <button class="btn-secondary" id="resetBtn" data-i18n="reset">放弃重置</button>
+                </div>
+
+                <div class="ai-img-box" id="aiImgBox" style="display:none;">
+                    <span style="color:var(--text-sub); font-size:0.85rem;" id="aiStatus" data-i18n="ai_loading">🎨 正在根据任务生成积极意境图...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：功能说明、声音、统计与花园 -->
+        <div class="side-column">
+            <!-- 规则注解统一区 -->
+            <div class="card">
+                <details class="guide-box" open>
+                    <summary>📌 <span data-i18n="guide_title">功能指南与规则</span></summary>
+                    <ul>
+                        <li><strong data-i18n="rule1_t">🌱 植物进化：</strong><span data-i18n="rule1_c">25分生成🌱幼苗，45分升为🌿枝叶，60分长成大树/花朵。</span></li>
+                        <li><strong data-i18n="rule2_t">🎲 盲盒概率：</strong><span data-i18n="rule2_c">普通植物 95% (🌳🌻🌴), 传说稀有 5% (🌵🪻🌸)。</span></li>
+                        <li><strong data-i18n="rule3_t">🎨 心境联动：</strong><span data-i18n="rule3_c">输入“焦虑/平静/疲惫/充实/激动/郁闷”等词自动变换氛围配色。</span></li>
+                    </ul>
+                </details>
+            </div>
+
+            <!-- 音效卡片 -->
+            <div class="card">
+                <h2>🍃 <span data-i18n="audio_title">氛围音轨混音</span></h2>
+                <div class="noise-controls">
+                    <div class="noise-item">
+                        <div class="noise-header">
+                            <span data-i18n="sound_rain">🌧️ 淅沥雨声</span>
+                            <input type="checkbox" id="rainToggle">
+                        </div>
+                        <input type="range" id="rainVol" min="0" max="1" step="0.01" value="0.3" style="width: 100%;">
+                    </div>
+                    <div class="noise-item">
+                        <div class="noise-header">
+                            <span data-i18n="sound_wind">🌬️ 舒缓微风</span>
+                            <input type="checkbox" id="windToggle">
+                        </div>
+                        <input type="range" id="windVol" min="0" max="1" step="0.01" value="0.3" style="width: 100%;">
+                    </div>
+                </div>
+                <div class="preset-btns">
+                    <button class="btn-secondary" id="presetStudy" style="font-size:0.75rem;" data-i18n="preset_study">深夜书房</button>
+                    <button class="btn-secondary" id="presetCafe" style="font-size:0.75rem;" data-i18n="preset_cafe">雨夜咖啡馆</button>
+                </div>
+            </div>
+
+            <!-- 统计与真实热力图 -->
+            <div class="card">
+                <h2>📊 <span data-i18n="heatmap_title">专注日历热力图</span></h2>
+                <p style="font-size:0.75rem; color:var(--text-sub);" data-i18n="heatmap_sub">真实专注记录 (颜色越深时间越长)</p>
+                <div class="heatmap-container" id="heatmap"></div>
+            </div>
+
+            <!-- 植物数字花园 -->
+            <div class="card">
+                <h2>🪴 <span data-i18n="garden_title">专注数字花园</span></h2>
+                <div class="garden-grid" id="gardenGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 沉浸 Zen 模式 Overlay -->
+    <div class="zen-overlay" id="zenOverlay">
+        <button class="btn-secondary zen-exit" id="zenExit" data-i18n="zen_exit">✕ 退出沉浸</button>
+        <div class="plant-stage" id="zenPlant" style="font-size: 6rem;">🌱</div>
+        <div class="timer-display" id="zenTimer" style="font-size: 7.5rem; color: #ffffff;">25:00</div>
+        <div style="color: rgba(255,255,255,0.85); font-size: 1.1rem;" id="zenQuote" data-i18n="zen_quote">保持呼吸，专注当下</div>
+    </div>
+
+    <!-- 成果分享卡片模态框 -->
+    <div class="modal" id="shareModal">
+        <div class="share-card" id="captureCard">
+            <h3>🍃 专注成效记录</h3>
+            <div class="plant-stage" id="cardPlantIcon" style="font-size:3.5rem; margin: 10px 0;">🌱</div>
+            <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 8px;" id="cardTask">阅读论文</p>
+            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;">⏱️ 专注时长：<span id="cardDuration">25</span> 分钟</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;" id="cardMoodArea">💭 心境："<span id="cardMood">平静</span>"</div>
+            <div style="margin-top: 14px; font-size: 0.72rem; opacity: 0.6;" id="cardDate">2026-09-16</div>
+            
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="downloadCardImage()">保存成就图片</button>
+                <button class="btn-secondary" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 多语言支持字典 ---
+        const i18nData = {
+            zh: {
+                title: "ZenFocus 专注花园",
+                zen: "🧘‍♂️ 沉浸",
+                timer_title: "专注生成器",
+                mode_countdown: "倒计时模式",
+                mode_stopwatch: "正计时模式",
+                default_quote: '"准备好开启一段沉浸时光了吗？"',
+                sound_toggle: "结束音效提示",
+                ai_toggle: "生成 AI 意境图",
+                start: "开始专注",
+                pause: "暂停",
+                finish: "完成并收割",
+                reset: "放弃重置",
+                ai_loading: "🎨 正在根据任务生成积极意境图...",
+                task_ph: "你现在正在专注做什么？...",
+                mood_ph: "记录此刻心境 (如：焦虑、平静、疲惫)...",
+                guide_title: "功能指南与规则",
+                rule1_t: "🌱 植物进化：",
+                rule1_c: "25分生成🌱幼苗，45分升为🌿枝叶，60分长成大树/花朵。",
+                rule2_t: "🎲 盲盒概率：",
+                rule2_c: "普通植物 95% (🌳🌻🌴), 传说稀有 5% (🌵🪻🌸)。",
+                rule3_t: "🎨 心境联动：",
+                rule3_c: "输入“焦虑/平静/疲惫/充实/激动/郁闷”等词自动变换氛围配色。",
+                audio_title: "氛围音轨混音",
+                sound_rain: "🌧️ 淅沥雨声",
+                sound_wind: "🌬️ 舒缓微风",
+                preset_study: "深夜书房",
+                preset_cafe: "雨夜咖啡馆",
+                heatmap_title: "专注日历热力图",
+                heatmap_sub: "真实专注记录 (颜色越深时间越长)",
+                garden_title: "专注数字花园",
+                pause_warn: "已暂停：",
+                pause_loss: "后未恢复将失去 1 株植物",
+                zen_exit: "✕ 退出沉浸",
+                zen_quote: "保持呼吸，专注当下"
+            },
+            en: {
+                title: "ZenFocus Garden",
+                zen: "🧘‍♂️ Zen Mode",
+                timer_title: "Focus Generator",
+                mode_countdown: "Countdown",
+                mode_stopwatch: "Stopwatch",
+                default_quote: '"Ready to start a focused session?"',
+                sound_toggle: "Completion Sound",
+                ai_toggle: "Generate AI Vibe Art",
+                start: "Start Focus",
+                pause: "Pause",
+                finish: "Finish & Harvest",
+                reset: "Give Up",
+                ai_loading: "🎨 Generating dynamic positive vibe art...",
+                task_ph: "What are you focusing on?",
+                mood_ph: "Current mood (e.g. anxious, calm, tired)...",
+                guide_title: "Features & Rules",
+                rule1_t: "🌱 Growth Stage: ",
+                rule1_c: "25m 🌱 Sprout, 45m 🌿 Foliage, 60m 🌳 Tree/Flower.",
+                rule2_t: "🎲 Gacha Chance: ",
+                rule2_c: "Common 95% (🌳🌻🌴), Legendary 5% (🌵🪻🌸).",
+                rule3_t: "🎨 Mood Vibe: ",
+                rule3_c: "Keywords adjust dynamic background palette automatically.",
+                audio_title: "Ambient Mixer",
+                sound_rain: "🌧️ Rainfall",
+                sound_wind: "🌬️ Soft Breeze",
+                preset_study: "Night Study",
+                preset_cafe: "Rainy Cafe",
+                heatmap_title: "Focus Heatmap",
+                heatmap_sub: "Real focus log (darker cell = more time)",
+                garden_title: "Digital Garden",
+                pause_warn: "Paused: ",
+                pause_loss: " left or you will lose 1 plant",
+                zen_exit: "✕ Exit Zen Mode",
+                zen_quote: "Keep breathing, stay present."
+            }
+        };
+
+        let currentLang = 'zh';
+
+        // --- 全局状态 ---
+        let currentMode = 'countdown';
+        let timerInterval = null;
+        let pauseInterval = null;
+        let isRunning = false;
+
+        let elapsedSeconds = 0;
+        let remainingSeconds = 25 * 60;
+        let targetCountdownSeconds = 25 * 60;
+        let pauseRemainingSeconds = 15 * 60;
+
+        let focusHistory = JSON.parse(localStorage.getItem('zen_focus_history') || '[]');
+
+        // --- DOM 获取 ---
+        const timerDisplay = document.getElementById('timer');
+        const zenTimer = document.getElementById('zenTimer');
+        const plantStage = document.getElementById('plantStage');
+        const startBtn = document.getElementById('startBtn');
+        const finishBtn = document.getElementById('finishBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timeSelect = document.getElementById('timeSelect');
+        const taskInput = document.getElementById('taskInput');
+        const moodInput = document.getElementById('moodInput');
+        const quoteBox = document.getElementById('quoteBox');
+        const gardenGrid = document.getElementById('gardenGrid');
+        const pauseWarning = document.getElementById('pauseWarning');
+        const pauseTimerDisplay = document.getElementById('pauseTimer');
+        const modeCountdownBtn = document.getElementById('modeCountdownBtn');
+        const modeStopwatchBtn = document.getElementById('modeStopwatchBtn');
+
+        // --- 多语言切换 ---
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langBtn').textContent = currentLang === 'zh' ? 'EN' : 'CN';
+            
+            const langMap = i18nData[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (langMap[key]) el.textContent = langMap[key];
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (langMap[key]) el.placeholder = langMap[key];
+            });
+            if (!isRunning) quoteBox.textContent = langMap.default_quote;
+        });
+
+        // --- 深度心情-环境配色联动 ---
+        const moodThemes = {
+            anxious: { bg: 'radial-gradient(circle at 50% 0%, #dbeafe 0%, #eff6ff 100%)', sage: '#3b82f6' },
+            calm: { bg: 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)', sage: '#5b8266' },
+            tired: { bg: 'radial-gradient(circle at 50% 0%, #fce7f3 0%, #fff1f2 100%)', sage: '#e11d48' },
+            fulfilled: { bg: 'radial-gradient(circle at 50% 0%, #fef3c7 0%, #fffbeb 100%)', sage: '#d97706' },
+            excited: { bg: 'radial-gradient(circle at 50% 0%, #ffedd5 0%, #fff7ed 100%)', sage: '#ea580c' },
+            gloomy: { bg: 'radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f8fafc 100%)', sage: '#475569' }
+        };
+
+        moodInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            let theme = null;
+
+            if (val.includes('焦虑') || val.includes('anxious')) theme = moodThemes.anxious;
+            else if (val.includes('平静') || val.includes('calm')) theme = moodThemes.calm;
+            else if (val.includes('疲惫') || val.includes('累') || val.includes('tired')) theme = moodThemes.tired;
+            else if (val.includes('充实') || val.includes('fulfilled')) theme = moodThemes.fulfilled;
+            else if (val.includes('激动') || val.includes('excited')) theme = moodThemes.excited;
+            else if (val.includes('郁闷') || val.includes('gloomy')) theme = moodThemes.gloomy;
+
+            if (theme) {
+                document.documentElement.style.setProperty('--bg-gradient', theme.bg);
+                document.documentElement.style.setProperty('--accent-sage', theme.sage);
+            }
+        });
+
+        // --- 模式切换与时间更新 ---
+        modeCountdownBtn.addEventListener('click', () => switchMode('countdown'));
+        modeStopwatchBtn.addEventListener('click', () => switchMode('stopwatch'));
+
+        function switchMode(mode) {
+            if (isRunning) return;
+            currentMode = mode;
+            if (mode === 'countdown') {
+                modeCountdownBtn.classList.add('active');
+                modeStopwatchBtn.classList.remove('active');
+                timeSelect.style.display = 'block';
+                finishBtn.style.display = 'none';
+                targetCountdownSeconds = parseInt(timeSelect.value) * 60;
+                remainingSeconds = targetCountdownSeconds;
+            } else {
+                modeStopwatchBtn.classList.add('active');
+                modeCountdownBtn.classList.remove('active');
+                timeSelect.style.display = 'none';
+                finishBtn.style.display = 'block';
+                elapsedSeconds = 0;
+            }
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            let secs = (currentMode === 'countdown') ? remainingSeconds : elapsedSeconds;
+            const m = Math.floor(secs / 60).toString().padStart(2, '0');
+            const s = (secs % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+            zenTimer.textContent = `${m}:${s}`;
+
+            // 动态植物形态演变
+            const currentTotalMin = Math.floor(((currentMode === 'countdown') ? (targetCountdownSeconds - remainingSeconds) : elapsedSeconds) / 60);
+            if (currentTotalMin < 25) plantStage.textContent = '🌱';
+            else if (currentTotalMin < 45) plantStage.textContent = '🌿';
+            else plantStage.textContent = '🌳';
+            document.getElementById('zenPlant').textContent = plantStage.textContent;
+        }
+
+        timeSelect.addEventListener('change', (e) => {
+            if(!isRunning && currentMode === 'countdown') {
+                targetCountdownSeconds = parseInt(e.target.value) * 60;
+                remainingSeconds = targetCountdownSeconds;
+                updateTimerDisplay();
+            }
+        });
+
+        // --- 核心计时逻辑 ---
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        });
+
+        function startTimer() {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            isRunning = true;
+            startBtn.textContent = i18nData[currentLang].pause;
+            stopPauseMonitor();
+
+            if (document.getElementById('aiToggle').checked) triggerAIGeneration();
+
+            timerInterval = setInterval(() => {
+                if (currentMode === 'countdown') {
+                    remainingSeconds--;
+                    updateTimerDisplay();
+                    if (remainingSeconds <= 0) completeFocusSession(Math.round(targetCountdownSeconds / 60));
+                } else {
+                    elapsedSeconds++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            startBtn.textContent = i18nData[currentLang].start;
+            startPauseMonitor();
+        }
+
+        function startPauseMonitor() {
+            pauseRemainingSeconds = 15 * 60;
+            pauseWarning.classList.add('active');
+            updatePauseDisplay();
+
+            pauseInterval = setInterval(() => {
+                pauseRemainingSeconds--;
+                updatePauseDisplay();
+                if (pauseRemainingSeconds <= 0) {
+                    stopPauseMonitor();
+                    punishPlantLoss();
+                }
+            }, 1000);
+        }
+
+        function stopPauseMonitor() {
+            clearInterval(pauseInterval);
+            pauseWarning.classList.remove('active');
+        }
+
+        function updatePauseDisplay() {
+            const m = Math.floor(pauseRemainingSeconds / 60).toString().padStart(2, '0');
+            const s = (pauseRemainingSeconds % 60).toString().padStart(2, '0');
+            pauseTimerDisplay.textContent = `${m}:${s}`;
+        }
+
+        function punishPlantLoss() {
+            if (focusHistory.length > 0) {
+                focusHistory.pop();
+                localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
+                renderGarden();
+                renderHeatmap();
+                alert('⚠️ 暂停超过15分钟，失去了一株植株！');
+            }
+            resetTimerState();
+        }
+
+        finishBtn.addEventListener('click', () => {
+            if (elapsedSeconds < 60) {
+                alert('专注时长未满 1 分钟，无法结算。');
+                return;
+            }
+            completeFocusSession(Math.round(elapsedSeconds / 60));
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (confirm("确定放弃当前的专注吗？")) resetTimerState();
+        });
+
+        function resetTimerState() {
+            clearInterval(timerInterval);
+            stopPauseMonitor();
+            isRunning = false;
+            startBtn.textContent = i18nData[currentLang].start;
+            if (currentMode === 'countdown') remainingSeconds = targetCountdownSeconds;
+            else elapsedSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        // --- 抽卡盲盒 & 成果结算 ---
+        function rollGachaPlant() {
+            const rand = Math.random();
+            if (rand < 0.05) {
+                const rares = ['🌵', '🪻', '🌸'];
+                return rares[Math.floor(Math.random() * rares.length)];
+            } else {
+                const commons = ['🌳', '🌻', '🌴', '🌲', '🪴', '🌾'];
+                return commons[Math.floor(Math.random() * commons.length)];
+            }
+        }
+
+        function completeFocusSession(durationMinutes) {
+            clearInterval(timerInterval);
+            stopPauseMonitor();
+            isRunning = false;
+            startBtn.textContent = i18nData[currentLang].start;
+
+            playChimeSound();
+
+            const task = taskInput.value.trim() || '日常专注';
+            const mood = moodInput.value.trim() || '平静';
+            const plant = rollGachaPlant();
+
+            const record = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                duration: durationMinutes,
+                task: task,
+                mood: mood,
+                plant: plant
+            };
+
+            focusHistory.push(record);
+            localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
+
+            renderGarden();
+            renderHeatmap();
+            openShareModal(record);
+
+            if (currentMode === 'countdown') remainingSeconds = targetCountdownSeconds;
+            else elapsedSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        function renderGarden() {
+            gardenGrid.innerHTML = '';
+            focusHistory.forEach(item => {
+                const badge = document.createElement('div');
+                badge.className = 'plant-badge';
+                badge.textContent = item.plant;
+                badge.title = `${new Date(item.date).toLocaleDateString()}: ${item.task} (${item.duration}分钟)`;
+                gardenGrid.appendChild(badge);
+            });
+        }
+
+        // --- 真实的 GitHub-Style 历史热力图 ---
+        function renderHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+
+            const today = new Date();
+            const daysMap = {};
+
+            focusHistory.forEach(item => {
+                const dStr = new Date(item.date).toISOString().split('T')[0];
+                daysMap[dStr] = (daysMap[dStr] || 0) + item.duration;
+            });
+
+            for (let i = 31; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const dStr = d.toISOString().split('T')[0];
+                const minutes = daysMap[dStr] || 0;
+
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                cell.title = `${dStr}: ${minutes} 分钟`;
+
+                if (minutes > 0 && minutes <= 25) cell.setAttribute('data-level', '1');
+                else if (minutes > 25 && minutes <= 60) cell.setAttribute('data-level', '2');
+                else if (minutes > 60 && minutes <= 120) cell.setAttribute('data-level', '3');
+                else if (minutes > 120) cell.setAttribute('data-level', '4');
+
+                heatmap.appendChild(cell);
+            }
+        }
+
+        // --- Web Audio API 高保真音效实现 ---
+        let audioCtx = null;
+        let rainSource = null, rainGain = null;
+        let windSource = null, windGain = null;
+
+        function initAudioContext() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playChimeSound() {
+            if (!document.getElementById('soundToggle').checked) return;
+            initAudioContext();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.0);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 2.0);
+        }
+
+        document.getElementById('rainToggle').addEventListener('change', (e) => {
+            initAudioContext();
+            if (e.target.checked) {
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+                rainSource = audioCtx.createBufferSource();
+                rainSource.buffer = buffer;
+                rainSource.loop = true;
+
+                const lowpass = audioCtx.createBiquadFilter();
+                lowpass.type = 'lowpass';
+                lowpass.frequency.value = 1000;
+
+                const highpass = audioCtx.createBiquadFilter();
+                highpass.type = 'highpass';
+                highpass.frequency.value = 400;
+
+                rainGain = audioCtx.createGain();
+                rainGain.gain.value = document.getElementById('rainVol').value;
+
+                rainSource.connect(lowpass);
+                lowpass.connect(highpass);
+                highpass.connect(rainGain);
+                rainGain.connect(audioCtx.destination);
+                rainSource.start();
+            } else if (rainSource) {
+                rainSource.stop();
+                rainSource = null;
+            }
+        });
+
+        document.getElementById('rainVol').addEventListener('input', (e) => {
+            if (rainGain) rainGain.gain.value = e.target.value;
+        });
+
+        document.getElementById('windToggle').addEventListener('change', (e) => {
+            initAudioContext();
+            if (e.target.checked) {
+                const bufferSize = audioCtx.sampleRate * 2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+
+                windSource = audioCtx.createBufferSource();
+                windSource.buffer = buffer;
+                windSource.loop = true;
+
+                const bandpass = audioCtx.createBiquadFilter();
+                bandpass.type = 'bandpass';
+                bandpass.frequency.value = 350;
+                bandpass.Q.value = 3.0;
+
+                const lfo = audioCtx.createOscillator();
+                lfo.frequency.value = 0.2;
+                const lfoGain = audioCtx.createGain();
+                lfoGain.gain.value = 150;
+                lfo.connect(lfoGain);
+                lfoGain.connect(bandpass.frequency);
+                lfo.start();
+
+                windGain = audioCtx.createGain();
+                windGain.gain.value = document.getElementById('windVol').value;
+
+                windSource.connect(bandpass);
+                bandpass.connect(windGain);
+                windGain.connect(audioCtx.destination);
+                windSource.start();
+            } else if (windSource) {
+                windSource.stop();
+                windSource = null;
+            }
+        });
+
+        document.getElementById('windVol').addEventListener('input', (e) => {
+            if (windGain) windGain.gain.value = e.target.value;
+        });
+
+        document.getElementById('presetStudy').addEventListener('click', () => {
+            document.documentElement.style.setProperty('--bg-gradient', 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)');
+            document.documentElement.style.setProperty('--text-main', '#f8fafc');
+            document.documentElement.style.setProperty('--card-bg', 'rgba(30, 41, 59, 0.85)');
+        });
+
+        document.getElementById('presetCafe').addEventListener('click', () => {
+            document.documentElement.style.setProperty('--bg-gradient', 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)');
+            document.documentElement.style.setProperty('--text-main', '#2d3732');
+            document.documentElement.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.85)');
+        });
+
+        // --- 积极向上且高度相关的 AI 意境图生成 ---
+        const positiveKeywordsMap = {
+            '学习': 'study workspace inspiring sunset',
+            '阅读': 'reading book warm light peaceful',
+            '看书': 'reading book warm light peaceful',
+            '写代码': 'coding modern clean desk bright',
+            '编程': 'coding developer aesthetic light',
+            '写作': 'writing desk cozy sunlight',
+            '工作': 'productive workspace minimalistic',
+            '运动': 'fitness runner sunrise energetic',
+            '健身': 'workout vitality bright green',
+            '冥想': 'meditation serene nature breath',
+            '画画': 'art painting creative vibrant color',
+            '平静': 'calm nature green leaves bright',
+            '充实': 'golden hour harvest glowing',
+            '激动': 'triumph peak blue sky bright',
+            '疲惫': 'gentle warm sunrise soft light',
+            '焦虑': 'clear blue sky calm ocean breeze'
+        };
+
+        function triggerAIGeneration() {
+            const box = document.getElementById('aiImgBox');
+            const statusText = document.getElementById('aiStatus');
+            
+            box.style.display = 'flex';
+            statusText.style.display = 'block';
+            statusText.textContent = i18nData[currentLang].ai_loading;
+            
+            const oldImg = box.querySelector('img');
+            if (oldImg) oldImg.remove();
+
+            const taskText = taskInput.value.trim();
+            const moodText = moodInput.value.trim();
+            
+            let matchedPrompt = '';
+            
+            for (let key in positiveKeywordsMap) {
+                if (taskText.includes(key) || moodText.includes(key)) {
+                    matchedPrompt += positiveKeywordsMap[key] + ' ';
+                }
+            }
+
+            if (!matchedPrompt) {
+                matchedPrompt = (taskText || moodText) ? `${taskText} ${moodText}` : 'inspiring bright green nature sunlight';
+            }
+
+            const upliftingModifiers = 'bright,inspiring,serene,uplifting';
+            const finalQuery = encodeURIComponent(`${matchedPrompt},${upliftingModifiers}`);
+            const imgUrl = `https://source.unsplash.com/800x400/?${finalQuery}&sig=${Date.now()}`;
+
+            const img = new Image();
+            img.src = imgUrl;
+            img.alt = `${taskText || 'Focus'} Vibe`;
+            
+            img.onload = () => {
+                statusText.style.display = 'none';
+                box.appendChild(img);
+            };
+
+            img.onerror = () => {
+                statusText.style.display = 'none';
+                box.innerHTML = `
+                    <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; 
+                                background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); color: #2d3732; font-weight: 600; padding: 12px; text-align: center;">
+                        <span style="font-size: 1.2rem; margin-bottom: 4px;">✨ 专注目标：“${taskText || '当下的美好'}”</span>
+                        <span style="font-size: 0.85rem; opacity: 0.8;">阳光充沛，静待花开 · 保持专注与热忱</span>
+                    </div>`;
+            };
+        }
+
+        document.getElementById('zenBtn').addEventListener('click', () => document.getElementById('zenOverlay').classList.add('active'));
+        document.getElementById('zenExit').addEventListener('click', () => document.getElementById('zenOverlay').classList.remove('active'));
+
+        // --- 数据导出/导入 ---
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(focusHistory)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `zenfocus_backup_${Date.now()}.json`;
+            a.click();
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+        document.getElementById('importFile').addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                focusHistory = JSON.parse(evt.target.result);
+                localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
+                renderGarden();
+                renderHeatmap();
+            };
+            reader.readAsText(e.target.files[0]);
+        });
+
+        // --- 模态框分享 ---
+        function openShareModal(record) {
+            document.getElementById('cardPlantIcon').textContent = record.plant;
+            document.getElementById('cardTask').textContent = record.task;
+            document.getElementById('cardDuration').textContent = record.duration;
+            document.getElementById('cardMood').textContent = record.mood;
+            document.getElementById('cardDate').textContent = new Date(record.date).toLocaleString('zh-CN');
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('shareModal').classList.remove('active'); }
+
+        function downloadCardImage() {
+            const cardElem = document.getElementById('captureCard');
+            html2canvas(cardElem, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Focus-Card-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        // 初始化渲染
+        renderGarden();
+        renderHeatmap();
+    </script>
+</body>
+</html>
