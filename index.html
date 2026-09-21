@@ -6,6 +6,8 @@
     <title>ZenFocus - 沉浸式专注与心境花园</title>
     <!-- 一键卡片生图组件 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- 图表分析库 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #f2f7f4;
@@ -25,7 +27,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-            transition: background 0.6s ease, border-color 0.4s ease, color 0.3s ease;
+            transition: background 0.8s ease, border-color 0.4s ease, color 0.4s ease;
         }
 
         body {
@@ -37,15 +39,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
         }
 
         header {
             width: 100%;
-            max-width: 920px;
+            max-width: 960px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            transition: opacity 0.5s ease;
         }
 
         .logo {
@@ -60,19 +64,21 @@
         .nav-tools {
             display: flex;
             gap: 8px;
+            align-items: center;
         }
 
         .app-container {
             width: 100%;
-            max-width: 920px;
+            max-width: 960px;
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
+            transition: opacity 0.5s ease;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 840px) {
             .app-container {
-                grid-template-columns: 1.15fr 0.85fr;
+                grid-template-columns: 1.1fr 0.9fr;
             }
         }
 
@@ -93,6 +99,7 @@
             color: var(--accent-sage);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
         }
 
@@ -210,7 +217,6 @@
         }
 
         button {
-            flex: 1;
             padding: 10px;
             border: none;
             border-radius: 10px;
@@ -220,23 +226,25 @@
             transition: all 0.2s ease;
         }
 
-        .btn-primary { background: var(--accent-sage); color: #ffffff; }
+        .btn-primary { background: var(--accent-sage); color: #ffffff; width: 100%; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-secondary { background: rgba(0, 0, 0, 0.05); color: var(--text-main); }
         .btn-secondary:hover { background: rgba(0, 0, 0, 0.1); }
 
-        /* 功能注解指南区 */
-        .guide-box {
-            font-size: 0.8rem;
+        .tab-btn {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            cursor: pointer;
             color: var(--text-sub);
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 10px 12px;
-            border-left: 3px solid var(--accent-sage);
         }
-
-        .guide-box summary { cursor: pointer; font-weight: 600; color: var(--text-main); }
-        .guide-box ul { padding-left: 14px; margin-top: 6px; line-height: 1.5; }
+        .tab-btn.active {
+            background: var(--accent-sage);
+            color: #fff;
+            border-color: var(--accent-sage);
+        }
 
         /* 混音控制器 */
         .noise-controls {
@@ -265,7 +273,7 @@
             gap: 8px;
         }
 
-        /* GitHub-style 热力图 */
+        /* Heatmap */
         .heatmap-container {
             display: grid;
             grid-template-columns: repeat(16, 1fr);
@@ -286,7 +294,7 @@
 
         .garden-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
             gap: 8px;
             max-height: 140px;
             overflow-y: auto;
@@ -294,23 +302,31 @@
         }
 
         .plant-badge {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .plant-badge:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .ai-img-box {
             width: 100%;
-            height: 160px;
+            height: 220px;
             border-radius: 12px;
             background: rgba(0,0,0,0.03);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             overflow: hidden;
@@ -321,21 +337,38 @@
 
         .ai-img-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* 全屏 Zen 模式 */
-        .zen-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-gradient);
-            z-index: 1000;
-            display: none;
+        /* 历史日志区域 */
+        .log-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
         }
 
-        .zen-overlay.active { display: flex; }
-        .zen-exit { position: absolute; top: 24px; right: 24px; width: auto; }
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            border-left: 3px solid var(--accent-sage);
+        }
 
+        /* Chart 饼图容器 */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 模态弹窗 */
         .modal {
             display: none;
             position: fixed;
@@ -349,233 +382,375 @@
         }
 
         .modal.active { display: flex; }
-        .share-card {
+        .modal-card {
             background: var(--card-bg);
             color: var(--text-main);
             border-radius: 20px;
-            padding: 28px;
+            padding: 24px;
             width: 100%;
-            max-width: 340px;
+            max-width: 360px;
             text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        /* 🧘‍♂️ 沉浸模式样式 */
+        .immersive-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #e2eee7 0%, #d4e5db 100%);
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .immersive-overlay.active {
+            display: flex;
+        }
+
+        .immersive-plant {
+            font-size: 6rem;
+            margin-bottom: 20px;
+            animation: breathe 8s ease-in-out infinite;
+        }
+
+        .immersive-timer {
+            font-size: 6.5rem;
+            font-weight: 200;
+            letter-spacing: 4px;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            animation: breatheText 8s ease-in-out infinite;
+        }
+
+        .immersive-quote {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-style: italic;
+            color: var(--text-sub);
+            opacity: 0.8;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .exit-immersive-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-size: 0.85rem;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .exit-immersive-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(1.05);
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes breatheText {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.03); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">🧘‍♀️ <span id="app-title" data-i18n="title">ZenFocus 专注花园</span></div>
+    <header id="appHeader">
+        <div class="logo">🧘‍♀️ <span id="app-title">ZenFocus 专注花园</span></div>
         <div class="nav-tools">
-            <button class="btn-secondary" id="langBtn" style="width: auto;">EN</button>
-            <button class="btn-secondary" id="zenBtn" style="width: auto;"><span data-i18n="zen">🧘‍♂️ 沉浸</span></button>
-            <button class="btn-secondary" id="exportBtn" style="width: auto;" title="导出 JSON">📤</button>
-            <button class="btn-secondary" id="importBtn" style="width: auto;" title="导入 JSON">📥</button>
+            <button class="btn-secondary" id="langToggleBtn" style="width: auto; padding: 6px 12px; font-size: 0.82rem;" title="切换语言">EN/中文</button>
+            <button class="btn-secondary" id="immersiveBtn" style="width: auto; padding: 6px 12px; font-size: 0.82rem;" title="沉浸模式">🧘‍♂️ 沉浸</button>
+            <button class="btn-secondary" id="exportBtn" style="width: auto; padding: 6px 10px;" title="导出 JSON">📤</button>
+            <button class="btn-secondary" id="importBtn" style="width: auto; padding: 6px 10px;" title="导入 JSON">📥</button>
             <input type="file" id="importFile" style="display:none;" accept=".json">
         </div>
     </header>
 
-    <div class="app-container">
-        <!-- 左侧：核心计时区 -->
+    <div class="app-container" id="appContainer">
+        <!-- 左侧：核心计时与 AI 护眼风景 -->
         <div class="main-column">
             <div class="card">
-                <h2>🌿 <span data-i18n="timer_title">专注生成器</span></h2>
+                <h2>🌿 <span data-i18n="focusGenerator">专注生成器</span></h2>
                 
                 <div class="mode-selector">
-                    <button class="mode-btn active" id="modeCountdownBtn" data-i18n="mode_countdown">倒计时模式</button>
-                    <button class="mode-btn" id="modeStopwatchBtn" data-i18n="mode_stopwatch">正计时模式</button>
+                    <button class="mode-btn active" id="modeCountdownBtn" data-i18n="modeCountdown">倒计时模式</button>
+                    <button class="mode-btn" id="modeStopwatchBtn" data-i18n="modeStopwatch">正计时模式</button>
                 </div>
 
                 <div class="plant-stage" id="plantStage">🌱</div>
                 <div class="timer-display" id="timer">25:00</div>
-                <div class="quote-box" id="quoteBox" data-i18n="default_quote">"准备好开启一段沉浸时光了吗？"</div>
+                <div class="quote-box" id="quoteBox" data-i18n="quoteDefault">"准备好开启一段沉浸时光了吗？"</div>
                 
                 <div class="pause-warning" id="pauseWarning">
-                    ⚠️ <span data-i18n="pause_warn">已暂停：</span><span id="pauseTimer">15:00</span> <span data-i18n="pause_loss">后未恢复将失去 1 株植物</span>
+                    ⚠️ <span data-i18n="pauseWarningTitle">已暂停：</span><span id="pauseTimer">15:00</span> <span data-i18n="pauseWarningText">后未恢复将失去 1 株植物</span>
                 </div>
 
                 <div class="input-group">
-                    <input type="text" id="taskInput" placeholder="你现在正在专注做什么？..." data-i18n-ph="task_ph">
-                    <input type="text" id="moodInput" placeholder="记录此刻心境 (如：焦虑、平静、疲惫)..." data-i18n-ph="mood_ph">
+                    <input type="text" id="taskInput" placeholder="你现在正在专注做什么？..." data-i18n-ph="phTask">
+                    <input type="text" id="moodInput" placeholder="记录此刻心境 (如：焦虑、平静、开心、疲惫)..." data-i18n-ph="phMood">
                     
                     <div class="time-select-wrapper" id="timeSelectWrapper">
                         <select id="timeSelect" style="flex: 2;"></select>
-                        <input type="number" id="customTimeInput" min="1" max="150" placeholder="自定义(分钟)" style="flex: 1;">
+                        <input type="number" id="customTimeInput" min="1" max="150" placeholder="自定义(分钟)" data-i18n-ph="phCustomTime" style="flex: 1;">
                     </div>
 
                     <div class="checkbox-options">
-                        <label><input type="checkbox" id="soundToggle" checked> <span data-i18n="sound_toggle">结束音效提示</span></label>
-                        <label><input type="checkbox" id="aiToggle"> <span data-i18n="ai_toggle">生成 AI 意境图</span></label>
+                        <label><input type="checkbox" id="soundToggle" checked> <span data-i18n="soundOption">结束音效提示</span></label>
+                        <label><input type="checkbox" id="aiToggle" checked> <span data-i18n="aiOption">生成免费 AI 护眼风景图</span></label>
                     </div>
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn-primary" id="startBtn" data-i18n="start">开始专注</button>
-                    <button class="btn-secondary" id="finishBtn" style="display: none;" data-i18n="finish">完成并收割</button>
-                    <button class="btn-secondary" id="resetBtn" data-i18n="reset">放弃重置</button>
+                    <button class="btn-primary" id="startBtn" style="flex: 1;" data-i18n="btnStart">开始专注</button>
+                    <button class="btn-secondary" id="finishBtn" style="display: none; flex: 1;" data-i18n="btnFinish">完成并收割</button>
+                    <button class="btn-secondary" id="resetBtn" style="flex: 1;" data-i18n="btnReset">放弃重置</button>
                 </div>
 
+                <!-- 免费 AI 护眼风景图展示区 -->
                 <div class="ai-img-box" id="aiImgBox" style="display:none;">
-                    <span style="color:var(--text-sub); font-size:0.85rem;" id="aiStatus" data-i18n="ai_loading">🎨 正在根据任务生成可爱动物意境图...</span>
+                    <span style="color:var(--text-sub); font-size:0.85rem;" id="aiStatus" data-i18n="aiGenerating">🖼️ 免费 AI 护眼风景图生成中...</span>
+                    <img id="aiResultImg" src="" alt="AI风景图" style="display:none;">
+                </div>
+            </div>
+
+            <!-- 专注内容与时间明细记录 -->
+            <div class="card">
+                <h2>📜 <span data-i18n="logTitle">专注明细日志</span></h2>
+                <div class="log-list" id="logList">
+                    <p style="font-size:0.82rem; color:var(--text-sub); text-align:center;" data-i18n="noLog">暂无专注记录，完成一次专注后将在此记录</p>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧：功能说明、声音、统计与花园 -->
+        <!-- 右侧：数据统计、饼状图与花园 -->
         <div class="side-column">
-            <!-- 规则注解统一区 -->
+            <!-- 统计饼状图区域（日/周/月） -->
             <div class="card">
-                <details class="guide-box" open>
-                    <summary>📌 <span data-i18n="guide_title">功能指南与规则</span></summary>
-                    <ul>
-                        <li><strong data-i18n="rule1_t">🌱 植物进化：</strong><span data-i18n="rule1_c">25分生成🌱幼苗，45分升为🌿枝叶，60分长成大树/花朵。</span></li>
-                        <li><strong data-i18n="rule2_t">🎲 盲盒概率：</strong><span data-i18n="rule2_c">普通植物 95% (🌳🌻🌴), 传说稀有 5% (🌵🪻🌸)。</span></li>
-                        <li><strong data-i18n="rule3_t">🎨 心境联动：</strong><span data-i18n="rule3_c">输入“焦虑/平静/疲惫/充实/激动/郁闷”等词自动变换氛围配色。</span></li>
-                    </ul>
-                </details>
+                <h2>
+                    <span data-i18n="statsTitle">🍰 专注时长分布统计</span>
+                    <div style="display:flex; gap:4px;">
+                        <button class="tab-btn active" id="btnStatsDay" onclick="switchStatsPeriod('day')" data-i18n="tabDay">日</button>
+                        <button class="tab-btn" id="btnStatsWeek" onclick="switchStatsPeriod('week')" data-i18n="tabWeek">周</button>
+                        <button class="tab-btn" id="btnStatsMonth" onclick="switchStatsPeriod('month')" data-i18n="tabMonth">月</button>
+                    </div>
+                </h2>
+                <div class="chart-container">
+                    <canvas id="taskPieChart"></canvas>
+                </div>
             </div>
 
-            <!-- 音效卡片 -->
+            <!-- 植物数字花园 -->
             <div class="card">
-                <h2>🍃 <span data-i18n="audio_title">氛围音轨混音</span></h2>
+                <h2>🪴 <span data-i18n="gardenTitle">专注数字花园</span> <span style="font-size:0.75rem; color:var(--text-sub); font-weight:normal;" data-i18n="gardenSub">(点击植物查看详情)</span></h2>
+                <div class="garden-grid" id="gardenGrid"></div>
+            </div>
+
+            <!-- 统计与真实热力图 -->
+            <div class="card">
+                <h2>📊 <span data-i18n="heatmapTitle">专注日历热力图</span></h2>
+                <p style="font-size:0.75rem; color:var(--text-sub);" data-i18n="heatmapSub">真实专注记录 (颜色越深时间越长)</p>
+                <div class="heatmap-container" id="heatmap"></div>
+            </div>
+
+            <!-- 音效与主题 -->
+            <div class="card">
+                <h2>🍃 <span data-i18n="audioTitle">氛围音轨混音</span></h2>
                 <div class="noise-controls">
                     <div class="noise-item">
                         <div class="noise-header">
-                            <span data-i18n="sound_rain">🌧️ 淅沥雨声</span>
+                            <span data-i18n="soundRain">🌧️ 淅沥雨声</span>
                             <input type="checkbox" id="rainToggle">
                         </div>
                         <input type="range" id="rainVol" min="0" max="1" step="0.01" value="0.3" style="width: 100%;">
                     </div>
                     <div class="noise-item">
                         <div class="noise-header">
-                            <span data-i18n="sound_wind">🌬️ 舒缓微风</span>
+                            <span data-i18n="soundWind">🌬️ 舒缓微风</span>
                             <input type="checkbox" id="windToggle">
                         </div>
                         <input type="range" id="windVol" min="0" max="1" step="0.01" value="0.3" style="width: 100%;">
                     </div>
                 </div>
                 <div class="preset-btns">
-                    <button class="btn-secondary" id="presetNight" style="font-size:0.75rem;" data-i18n="preset_night">夜间模式</button>
-                    <button class="btn-secondary" id="presetDay" style="font-size:0.75rem;" data-i18n="preset_day">日间模式</button>
+                    <button class="btn-secondary" id="presetNight" style="font-size:0.75rem;" data-i18n="themeNight">夜间模式</button>
+                    <button class="btn-secondary" id="presetDay" style="font-size:0.75rem;" data-i18n="themeDay">日间模式</button>
                 </div>
-            </div>
-
-            <!-- 统计与真实热力图 -->
-            <div class="card">
-                <h2>📊 <span data-i18n="heatmap_title">专注日历热力图</span></h2>
-                <p style="font-size:0.75rem; color:var(--text-sub);" data-i18n="heatmap_sub">真实专注记录 (颜色越深时间越长)</p>
-                <div class="heatmap-container" id="heatmap"></div>
-            </div>
-
-            <!-- 植物数字花园 -->
-            <div class="card">
-                <h2>🪴 <span data-i18n="garden_title">专注数字花园</span></h2>
-                <div class="garden-grid" id="gardenGrid"></div>
             </div>
         </div>
     </div>
 
-    <!-- 沉浸 Zen 模式 Overlay -->
-    <div class="zen-overlay" id="zenOverlay">
-        <button class="btn-secondary zen-exit" id="zenExit" data-i18n="zen_exit">✕ 退出沉浸</button>
-        <div class="plant-stage" id="zenPlant" style="font-size: 6rem;">🌱</div>
-        <div class="timer-display" id="zenTimer" style="font-size: 7.5rem; color: var(--text-main);">25:00</div>
-        <div style="color: var(--text-sub); font-size: 1.1rem;" id="zenQuote" data-i18n="zen_quote">保持呼吸，专注当下</div>
+    <!-- 🧘‍♂️ 沉浸模式全屏覆盖层 -->
+    <div class="immersive-overlay" id="immersiveOverlay">
+        <button class="exit-immersive-btn" id="exitImmersiveBtn" data-i18n="btnExitImmersive">✕ 退出沉浸</button>
+        <div class="immersive-plant" id="immersivePlantStage">🌱</div>
+        <div class="immersive-timer" id="immersiveTimer">25:00</div>
+        <div class="immersive-quote" id="immersiveQuote" data-i18n="quoteDefault">"准备好开启一段沉浸时光了吗？"</div>
+    </div>
+
+    <!-- 查看植物详情的弹窗 -->
+    <div class="modal" id="plantDetailModal">
+        <div class="modal-card">
+            <div style="font-size: 3.5rem; margin-bottom: 8px;" id="detailPlantIcon">🌱</div>
+            <h3 style="margin-bottom: 12px; color: var(--accent-sage);" id="detailTask">任务名称</h3>
+            <div style="font-size: 0.9rem; margin: 6px 0; color: var(--text-main);"><span data-i18n="modalDuration">⏱️ 专注时间：</span><strong id="detailDuration">0</strong> <span data-i18n="unitMinutes">分钟</span></div>
+            <div style="font-size: 0.88rem; margin: 6px 0; color: var(--text-sub);"><span data-i18n="modalMood">💭 当时心情：</span>"<span id="detailMood">平静</span>"</div>
+            <div style="font-size: 0.78rem; margin-top: 10px; opacity: 0.7;" id="detailDate">2026-09-21 15:00</div>
+            <button class="btn-primary" style="margin-top: 18px; width: 100%;" onclick="closePlantDetailModal()" data-i18n="btnClose">关闭</button>
+        </div>
     </div>
 
     <!-- 成果分享卡片模态框 -->
     <div class="modal" id="shareModal">
-        <div class="share-card" id="captureCard">
-            <h3>🍃 专注成效记录</h3>
+        <div class="modal-card" id="captureCard">
+            <h3 data-i18n="cardTitle">🍃 专注成效记录</h3>
             <div class="plant-stage" id="cardPlantIcon" style="font-size:3.5rem; margin: 10px 0;">🌱</div>
             <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 8px;" id="cardTask">阅读论文</p>
-            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;">⏱️ 专注时长：<span id="cardDuration">25</span> 分钟</div>
-            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;" id="cardMoodArea">💭 心境："<span id="cardMood">平静</span>"</div>
-            <div style="margin-top: 14px; font-size: 0.72rem; opacity: 0.6;" id="cardDate">2026-09-16</div>
+            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;"><span data-i18n="modalDuration">⏱️ 专注时长：</span><span id="cardDuration">25</span> <span data-i18n="unitMinutes">分钟</span></div>
+            <div style="font-size: 0.85rem; color: var(--text-sub); margin: 4px 0;" id="cardMoodArea"><span data-i18n="modalMood">💭 心境：</span>"<span id="cardMood">平静</span>"</div>
+            <div style="margin-top: 14px; font-size: 0.72rem; opacity: 0.6;" id="cardDate">2026-09-21</div>
             
             <div class="btn-group" style="margin-top: 20px;">
-                <button class="btn-primary" onclick="downloadCardImage()">保存成就图片</button>
-                <button class="btn-secondary" onclick="closeModal()">关闭</button>
+                <button class="btn-primary" onclick="downloadCardImage()" data-i18n="btnSaveCard">保存成就图片</button>
+                <button class="btn-secondary" onclick="closeShareModal()" data-i18n="btnClose">关闭</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 多语言支持字典 ---
-        const i18nData = {
+        // --- 多语言字典定义 ---
+        let currentLang = 'zh';
+        const i18n = {
             zh: {
-                title: "ZenFocus 专注花园",
-                zen: "🧘‍♂️ 沉浸",
-                timer_title: "专注生成器",
-                mode_countdown: "倒计时模式",
-                mode_stopwatch: "正计时模式",
-                default_quote: '"准备好开启一段沉浸时光了吗？"',
-                sound_toggle: "结束音效提示",
-                ai_toggle: "生成 AI 意境图",
-                start: "开始专注",
-                pause: "暂停",
-                finish: "完成并收割",
-                reset: "放弃重置",
-                ai_loading: "🎨 正在根据任务生成可爱动物意境图...",
-                task_ph: "你现在正在专注做什么？...",
-                mood_ph: "记录此刻心境 (如：焦虑、平静、疲惫)...",
-                guide_title: "功能指南与规则",
-                rule1_t: "🌱 植物进化：",
-                rule1_c: "25分生成🌱幼苗，45分升为🌿枝叶，60分长成大树/花朵。",
-                rule2_t: "🎲 盲盒概率：",
-                rule2_c: "普通植物 95% (🌳🌻🌴), 传说稀有 5% (🌵🪻🌸)。",
-                rule3_t: "🎨 心境联动：",
-                rule3_c: "输入“焦虑/平静/疲惫/充实/激动/郁闷”等词自动变换氛围配色。",
-                audio_title: "氛围音轨混音",
-                sound_rain: "🌧️ 淅沥雨声",
-                sound_wind: "🌬️ 舒缓微风",
-                preset_night: "夜间模式",
-                preset_day: "日间模式",
-                heatmap_title: "专注日历热力图",
-                heatmap_sub: "真实专注记录 (颜色越深时间越长)",
-                garden_title: "专注数字花园",
-                pause_warn: "已暂停：",
-                pause_loss: "后未恢复将失去 1 株植物",
-                zen_exit: "✕ 退出沉浸",
-                zen_quote: "保持呼吸，专注当下"
+                appTitle: "ZenFocus 专注花园",
+                focusGenerator: "专注生成器",
+                modeCountdown: "倒计时模式",
+                modeStopwatch: "正计时模式",
+                quoteDefault: '"准备好开启一段沉浸时光了吗？"',
+                pauseWarningTitle: "已暂停：",
+                pauseWarningText: "后未恢复将失去 1 株植物",
+                phTask: "你现在正在专注做什么？...",
+                phMood: "记录此刻心境 (如：焦虑、平静、开心、疲惫)...",
+                phCustomTime: "自定义(分钟)",
+                soundOption: "结束音效提示",
+                aiOption: "生成免费 AI 护眼风景图",
+                btnStart: "开始专注",
+                btnPause: "暂停",
+                btnResume: "继续专注",
+                btnFinish: "完成并收割",
+                btnReset: "放弃重置",
+                aiGenerating: "🖼️ 免费 AI 护眼风景图生成中...",
+                aiFail: "❌ AI 图片生成失败，但不影响专注计时",
+                logTitle: "专注明细日志",
+                noLog: "暂无专注记录，完成一次专注后将在此记录",
+                statsTitle: "🍰 专注时长分布统计",
+                tabDay: "日",
+                tabWeek: "周",
+                tabMonth: "月",
+                gardenTitle: "专注数字花园",
+                gardenSub: "(点击植物查看详情)",
+                heatmapTitle: "📊 专注日历热力图",
+                heatmapSub: "真实专注记录 (颜色越深时间越长)",
+                audioTitle: "🍃 氛围音轨混音",
+                soundRain: "🌧️ 淅沥雨声",
+                soundWind: "🌬️ 舒缓微风",
+                themeNight: "夜间模式",
+                themeDay: "日间模式",
+                btnExitImmersive: "✕ 退出沉浸",
+                modalDuration: "⏱️ 专注时间：",
+                modalMood: "💭 心情：",
+                unitMinutes: "分钟",
+                btnClose: "关闭",
+                cardTitle: "🍃 专注成效记录",
+                btnSaveCard: "保存成就图片",
+                defaultTask: "日常专注",
+                defaultMood: "平静",
+                noData: "暂无数据",
+                confirmDelete: "确定删除该条专注记录吗？",
+                confirmGiveup: "确定放弃当前的专注吗？",
+                alertLostPlant: "⚠️ 暂停超过15分钟，失去了一株植株！",
+                alertTooShort: "专注时长过短，无法结算。",
+                opt1: "1 分钟 (体验测试)",
+                opt15: "15 分钟 (快速冲刺)",
+                opt25: "25 分钟 (标准番茄钟)",
+                opt45: "45 分钟 (深度专注)",
+                opt60: "60 分钟 (极限思维)",
+                optCustom: "分钟"
             },
             en: {
-                title: "ZenFocus Garden",
-                zen: "🧘‍♂️ Zen Mode",
-                timer_title: "Focus Generator",
-                mode_countdown: "Countdown",
-                mode_stopwatch: "Stopwatch",
-                default_quote: '"Ready to start a focused session?"',
-                sound_toggle: "Completion Sound",
-                ai_toggle: "Generate AI Vibe Art",
-                start: "Start Focus",
-                pause: "Pause",
-                finish: "Finish & Harvest",
-                reset: "Give Up",
-                ai_loading: "🎨 Generating cute animal vibe art...",
-                task_ph: "What are you focusing on?",
-                mood_ph: "Current mood (e.g. anxious, calm, tired)...",
-                guide_title: "Features & Rules",
-                rule1_t: "🌱 Growth Stage: ",
-                rule1_c: "25m 🌱 Sprout, 45m 🌿 Foliage, 60m 🌳 Tree/Flower.",
-                rule2_t: "🎲 Gacha Chance: ",
-                rule2_c: "Common 95% (🌳🌻🌴), Legendary 5% (🌵🪻🌸).",
-                rule3_t: "🎨 Mood Vibe: ",
-                rule3_c: "Keywords adjust dynamic background palette automatically.",
-                audio_title: "Ambient Mixer",
-                sound_rain: "🌧️ Rainfall",
-                sound_wind: "🌬️ Soft Breeze",
-                preset_night: "Night Mode",
-                preset_day: "Day Mode",
-                heatmap_title: "Focus Heatmap",
-                heatmap_sub: "Real focus log (darker cell = more time)",
-                garden_title: "Digital Garden",
-                pause_warn: "Paused: ",
-                pause_loss: " left or you will lose 1 plant",
-                zen_exit: "✕ Exit Zen Mode",
-                zen_quote: "Keep breathing, stay present."
+                appTitle: "ZenFocus Garden",
+                focusGenerator: "Focus Generator",
+                modeCountdown: "Countdown",
+                modeStopwatch: "Stopwatch",
+                quoteDefault: '"Ready to start a focused immersion?"',
+                pauseWarningTitle: "Paused: ",
+                pauseWarningText: "remaining before losing 1 plant",
+                phTask: "What are you focusing on right now?...",
+                phMood: "Record your emotion (e.g. Calm, Happy, Anxious)...",
+                phCustomTime: "Custom (min)",
+                soundOption: "Sound effects on finish",
+                aiOption: "Generate free AI eye-care scenery",
+                btnStart: "Start Focus",
+                btnPause: "Pause",
+                btnResume: "Resume Focus",
+                btnFinish: "Finish & Harvest",
+                btnReset: "Reset / Give Up",
+                aiGenerating: "🖼️ Generating free AI eye-care landscape...",
+                aiFail: "❌ AI Image generation failed, focus timer unaffected",
+                logTitle: "Focus Logs Detail",
+                noLog: "No focus records yet. Complete a session to record here.",
+                statsTitle: "🍰 Focus Time Distribution",
+                tabDay: "Day",
+                tabWeek: "Week",
+                tabMonth: "Month",
+                gardenTitle: "Digital Plant Garden",
+                gardenSub: "(Click plant for details)",
+                heatmapTitle: "📊 Calendar Heatmap",
+                heatmapSub: "Real focus records (darker color = longer duration)",
+                audioTitle: "🍃 Ambient Sound Mixer",
+                soundRain: "🌧️ Gentle Rain",
+                soundWind: "🌬️ Soft Wind",
+                themeNight: "Night Theme",
+                themeDay: "Day Theme",
+                btnExitImmersive: "✕ Exit Immersive",
+                modalDuration: "⏱️ Duration: ",
+                modalMood: "💭 Mood: ",
+                unitMinutes: "mins",
+                btnClose: "Close",
+                cardTitle: "🍃 Focus Achievement Card",
+                btnSaveCard: "Save Achievement Image",
+                defaultTask: "Daily Focus",
+                defaultMood: "Calm",
+                noData: "No Data",
+                confirmDelete: "Are you sure you want to delete this record?",
+                confirmGiveup: "Are you sure you want to give up this focus session?",
+                alertLostPlant: "⚠️ Paused over 15 minutes, lost a plant!",
+                alertTooShort: "Focus session too short to record.",
+                opt1: "1 Min (Quick Test)",
+                opt15: "15 Mins (Quick Sprint)",
+                opt25: "25 Mins (Standard Pomodoro)",
+                opt45: "45 Mins (Deep Work)",
+                opt60: "60 Mins (Extreme Thinking)",
+                optCustom: "Mins"
             }
         };
-
-        let currentLang = 'zh';
 
         // --- 全局状态 ---
         let currentMode = 'countdown';
@@ -587,12 +762,13 @@
         let remainingSeconds = 25 * 60;
         let targetCountdownSeconds = 25 * 60;
         let pauseRemainingSeconds = 15 * 60;
+        let currentStatsPeriod = 'day'; 
 
         let focusHistory = JSON.parse(localStorage.getItem('zen_focus_history') || '[]');
+        let pieChartInstance = null;
 
         // --- DOM 获取 ---
         const timerDisplay = document.getElementById('timer');
-        const zenTimer = document.getElementById('zenTimer');
         const plantStage = document.getElementById('plantStage');
         const startBtn = document.getElementById('startBtn');
         const finishBtn = document.getElementById('finishBtn');
@@ -608,76 +784,127 @@
         const pauseTimerDisplay = document.getElementById('pauseTimer');
         const modeCountdownBtn = document.getElementById('modeCountdownBtn');
         const modeStopwatchBtn = document.getElementById('modeStopwatchBtn');
+        
+        // 沉浸模式 DOM
+        const immersiveOverlay = document.getElementById('immersiveOverlay');
+        const immersiveBtn = document.getElementById('immersiveBtn');
+        const exitImmersiveBtn = document.getElementById('exitImmersiveBtn');
+        const immersiveTimer = document.getElementById('immersiveTimer');
+        const immersivePlantStage = document.getElementById('immersivePlantStage');
+        const immersiveQuote = document.getElementById('immersiveQuote');
 
-        // 初始化倒计时选项 (1-150分钟)
+        // 语言切换 DOM
+        const langToggleBtn = document.getElementById('langToggleBtn');
+
+        // 初始化时间下拉框
         function initTimeSelectOptions() {
+            const currentVal = timeSelect.value || "25";
             timeSelect.innerHTML = '';
             for (let i = 1; i <= 150; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
-                if (i === 1) opt.textContent = "1 分钟 (体验测试)";
-                else if (i === 15) opt.textContent = "15 分钟 (快速冲刺)";
-                else if (i === 25) opt.textContent = "25 分钟 (标准番茄钟)";
-                else if (i === 45) opt.textContent = "45 分钟 (深度专注)";
-                else if (i === 60) opt.textContent = "60 分钟 (极限思维)";
-                else opt.textContent = `${i} 分钟`;
+                if (i === 1) opt.textContent = i18n[currentLang].opt1;
+                else if (i === 15) opt.textContent = i18n[currentLang].opt15;
+                else if (i === 25) opt.textContent = i18n[currentLang].opt25;
+                else if (i === 45) opt.textContent = i18n[currentLang].opt45;
+                else if (i === 60) opt.textContent = i18n[currentLang].opt60;
+                else opt.textContent = `${i} ${i18n[currentLang].optCustom}`;
 
-                if (i === 25) opt.selected = true;
                 timeSelect.appendChild(opt);
             }
+            timeSelect.value = currentVal;
         }
-        initTimeSelectOptions();
 
-        // --- 多语言切换 ---
-        document.getElementById('langBtn').addEventListener('click', () => {
+        // 切换全页语言
+        langToggleBtn.addEventListener('click', () => {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            document.getElementById('langBtn').textContent = currentLang === 'zh' ? 'EN' : 'CN';
-            
-            const langMap = i18nData[currentLang];
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (langMap[key]) el.textContent = langMap[key];
-            });
-            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-                const key = el.getAttribute('data-i18n-ph');
-                if (langMap[key]) el.placeholder = langMap[key];
-            });
-            if (!isRunning) quoteBox.textContent = langMap.default_quote;
+            updateLanguage();
         });
 
-        // --- 深度心情-环境配色联动 ---
-        const moodThemes = {
-            anxious: { bg: 'radial-gradient(circle at 50% 0%, #dbeafe 0%, #eff6ff 100%)', sage: '#3b82f6' },
-            calm: { bg: 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)', sage: '#5b8266' },
-            tired: { bg: 'radial-gradient(circle at 50% 0%, #fce7f3 0%, #fff1f2 100%)', sage: '#e11d48' },
-            fulfilled: { bg: 'radial-gradient(circle at 50% 0%, #fef3c7 0%, #fffbeb 100%)', sage: '#d97706' },
-            excited: { bg: 'radial-gradient(circle at 50% 0%, #ffedd5 0%, #fff7ed 100%)', sage: '#ea580c' },
-            gloomy: { bg: 'radial-gradient(circle at 50% 0%, #e2e8f0 0%, #f8fafc 100%)', sage: '#475569' }
-        };
+        function updateLanguage() {
+            // 更新简单文本
+            document.querySelectorAll('[data-i18n]').forEach(elem => {
+                const key = elem.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    elem.textContent = i18n[currentLang][key];
+                }
+            });
 
-        moodInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase().trim();
-            let theme = null;
+            // 更新 Placeholder
+            document.querySelectorAll('[data-i18n-ph]').forEach(elem => {
+                const key = elem.getAttribute('data-i18n-ph');
+                if (i18n[currentLang][key]) {
+                    elem.placeholder = i18n[currentLang][key];
+                }
+            });
 
-            if (val.includes('焦虑') || val.includes('anxious')) theme = moodThemes.anxious;
-            else if (val.includes('平静') || val.includes('calm')) theme = moodThemes.calm;
-            else if (val.includes('疲惫') || val.includes('累') || val.includes('tired')) theme = moodThemes.tired;
-            else if (val.includes('充实') || val.includes('fulfilled')) theme = moodThemes.fulfilled;
-            else if (val.includes('激动') || val.includes('excited')) theme = moodThemes.excited;
-            else if (val.includes('郁闷') || val.includes('gloomy')) theme = moodThemes.gloomy;
+            // 更新网页 Title 和 Logo
+            document.getElementById('app-title').textContent = i18n[currentLang].appTitle;
+            document.title = `ZenFocus - ${i18n[currentLang].appTitle}`;
 
-            if (theme) {
-                document.documentElement.style.setProperty('--bg-gradient', theme.bg);
-                document.documentElement.style.setProperty('--accent-sage', theme.sage);
+            // 更新动态按钮文本
+            if (isRunning) {
+                startBtn.textContent = i18n[currentLang].btnPause;
+            } else {
+                if ((currentMode === 'countdown' && remainingSeconds < targetCountdownSeconds) || (currentMode === 'stopwatch' && elapsedSeconds > 0)) {
+                    startBtn.textContent = i18n[currentLang].btnResume;
+                } else {
+                    startBtn.textContent = i18n[currentLang].btnStart;
+                }
             }
+
+            initTimeSelectOptions();
+            renderLogList();
+            renderPieChart();
+        }
+
+        // --- 沉浸模式逻辑 ---
+        immersiveBtn.addEventListener('click', () => {
+            immersiveOverlay.classList.add('active');
+            updateTimerDisplay();
         });
+
+        exitImmersiveBtn.addEventListener('click', () => {
+            immersiveOverlay.classList.remove('active');
+        });
+
+        // --- 情绪自动识别与背景更改逻辑 ---
+        moodInput.addEventListener('input', (e) => {
+            const moodText = e.target.value.trim();
+            updateThemeByMood(moodText);
+        });
+
+        function updateThemeByMood(text) {
+            if (!text) {
+                setThemeColors('#f2f7f4', 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)', '#5b8266');
+                return;
+            }
+
+            if (/(焦虑|烦躁|压力|紧张|不安|慌|恐慌|心烦|anxious|stressed|nervous|worried)/i.test(text)) {
+                setThemeColors('#f0f4f9', 'radial-gradient(circle at 50% 0%, #dbe2ef 0%, #f0f4f9 100%)', '#4a6984');
+            } else if (/(开心|快乐|高兴|愉悦|棒|爽|激动|期待|兴奋|happy|excited|joy|great)/i.test(text)) {
+                setThemeColors('#fdfbf7', 'radial-gradient(circle at 50% 0%, #fef3c7 0%, #fdfbf7 100%)', '#d97706');
+            } else if (/(平静|宁静|安详|舒适|放松|淡定|沉静|calm|relaxed|peaceful)/i.test(text)) {
+                setThemeColors('#f2f7f4', 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)', '#5b8266');
+            } else if (/(疲惫|累|困|无力|倦|迷茫|厌倦|tired|exhausted|sleepy)/i.test(text)) {
+                setThemeColors('#f5f3f7', 'radial-gradient(circle at 50% 0%, #e9e5ef 0%, #f5f3f7 100%)', '#7c698d');
+            } else if (/(愤怒|生气|不爽|恼火|炸裂|angry|annoyed)/i.test(text)) {
+                setThemeColors('#faf4f2', 'radial-gradient(circle at 50% 0%, #ffe4e1 0%, #faf4f2 100%)', '#c05621');
+            }
+        }
+
+        function setThemeColors(bgColor, bgGradient, accentColor) {
+            document.documentElement.style.setProperty('--bg-color', bgColor);
+            document.documentElement.style.setProperty('--bg-gradient', bgGradient);
+            document.documentElement.style.setProperty('--accent-sage', accentColor);
+        }
 
         // --- 模式切换与时间更新 ---
         modeCountdownBtn.addEventListener('click', () => switchMode('countdown'));
         modeStopwatchBtn.addEventListener('click', () => switchMode('stopwatch'));
 
         function switchMode(mode) {
-            if (isRunning) return;
+            resetTimerState(); // 切换模式时清空上一次的状态
             currentMode = mode;
             if (mode === 'countdown') {
                 modeCountdownBtn.classList.add('active');
@@ -710,33 +937,30 @@
 
         timeSelect.addEventListener('change', () => {
             customTimeInput.value = '';
-            if(!isRunning && currentMode === 'countdown') {
-                applySelectedCountdownTime();
-            }
+            if(!isRunning && currentMode === 'countdown') applySelectedCountdownTime();
         });
 
         customTimeInput.addEventListener('input', () => {
-            if(!isRunning && currentMode === 'countdown') {
-                applySelectedCountdownTime();
-            }
+            if(!isRunning && currentMode === 'countdown') applySelectedCountdownTime();
         });
 
         function updateTimerDisplay() {
             let secs = (currentMode === 'countdown') ? remainingSeconds : elapsedSeconds;
             const m = Math.floor(secs / 60).toString().padStart(2, '0');
             const s = (secs % 60).toString().padStart(2, '0');
+            
+            // 同步页面与沉浸模式倒计时
             timerDisplay.textContent = `${m}:${s}`;
-            zenTimer.textContent = `${m}:${s}`;
+            immersiveTimer.textContent = `${m}:${s}`;
 
-            // 动态植物形态演变
             const currentTotalMin = Math.floor(((currentMode === 'countdown') ? (targetCountdownSeconds - remainingSeconds) : elapsedSeconds) / 60);
-            if (currentTotalMin < 25) plantStage.textContent = '🌱';
-            else if (currentTotalMin < 45) plantStage.textContent = '🌿';
-            else plantStage.textContent = '🌳';
-            document.getElementById('zenPlant').textContent = plantStage.textContent;
+            const plantIcon = currentTotalMin < 25 ? '🌱' : (currentTotalMin < 45 ? '🌿' : '🌳');
+            
+            plantStage.textContent = plantIcon;
+            immersivePlantStage.textContent = plantIcon;
         }
 
-        // --- 核心计时逻辑 ---
+        // --- 计时器核心控制 ---
         startBtn.addEventListener('click', () => {
             if (isRunning) {
                 pauseTimer();
@@ -747,17 +971,34 @@
 
         function startTimer() {
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            
+            // 如果倒计时归零，开启下一轮时自动重新赋值为所选时长
+            if (currentMode === 'countdown' && remainingSeconds <= 0) {
+                applySelectedCountdownTime();
+            }
+
             isRunning = true;
-            startBtn.textContent = i18nData[currentLang].pause;
+            startBtn.textContent = i18n[currentLang].btnPause;
             stopPauseMonitor();
 
-            if (document.getElementById('aiToggle').checked) triggerAIGeneration();
+            if (document.getElementById('aiToggle').checked) {
+                fetchFreeAIPicture();
+            }
+
+            if (timerInterval) clearInterval(timerInterval);
 
             timerInterval = setInterval(() => {
                 if (currentMode === 'countdown') {
-                    remainingSeconds--;
-                    updateTimerDisplay();
-                    if (remainingSeconds <= 0) completeFocusSession(Math.round(targetCountdownSeconds / 60));
+                    if (remainingSeconds > 0) {
+                        remainingSeconds--;
+                        updateTimerDisplay();
+                    }
+                    if (remainingSeconds <= 0) {
+                        // 计时结束，清理当前定时器并结算
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        completeFocusSession(Math.max(1, Math.round(targetCountdownSeconds / 60)));
+                    }
                 } else {
                     elapsedSeconds++;
                     updateTimerDisplay();
@@ -767,8 +1008,11 @@
 
         function pauseTimer() {
             isRunning = false;
-            clearInterval(timerInterval);
-            startBtn.textContent = i18nData[currentLang].start;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            startBtn.textContent = i18n[currentLang].btnResume;
             startPauseMonitor();
         }
 
@@ -777,18 +1021,25 @@
             pauseWarning.classList.add('active');
             updatePauseDisplay();
 
+            if (pauseInterval) clearInterval(pauseInterval);
+
             pauseInterval = setInterval(() => {
                 pauseRemainingSeconds--;
                 updatePauseDisplay();
                 if (pauseRemainingSeconds <= 0) {
                     stopPauseMonitor();
-                    punishPlantLoss();
+                    if (focusHistory.length > 0) {
+                        focusHistory.pop();
+                        saveAndRefreshAll();
+                        alert(i18n[currentLang].alertLostPlant);
+                    }
+                    resetTimerState();
                 }
             }, 1000);
         }
 
         function stopPauseMonitor() {
-            clearInterval(pauseInterval);
+            if (pauseInterval) clearInterval(pauseInterval);
             pauseWarning.classList.remove('active');
         }
 
@@ -798,40 +1049,37 @@
             pauseTimerDisplay.textContent = `${m}:${s}`;
         }
 
-        function punishPlantLoss() {
-            if (focusHistory.length > 0) {
-                focusHistory.pop();
-                localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
-                renderGarden();
-                renderHeatmap();
-                alert('⚠️ 暂停超过15分钟，失去了一株植株！');
-            }
-            resetTimerState();
-        }
-
         finishBtn.addEventListener('click', () => {
-            if (elapsedSeconds < 60) {
-                alert('专注时长未满 1 分钟，无法结算。');
+            if (elapsedSeconds < 1) {
+                alert(i18n[currentLang].alertTooShort);
                 return;
             }
-            completeFocusSession(Math.round(elapsedSeconds / 60));
+            completeFocusSession(Math.max(1, Math.round(elapsedSeconds / 60)));
         });
 
         resetBtn.addEventListener('click', () => {
-            if (confirm("确定放弃当前的专注吗？")) resetTimerState();
+            if (confirm(i18n[currentLang].confirmGiveup)) resetTimerState();
         });
 
+        // 彻底清理并刷新重置倒计时/正计时
         function resetTimerState() {
-            clearInterval(timerInterval);
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             stopPauseMonitor();
             isRunning = false;
-            startBtn.textContent = i18nData[currentLang].start;
-            if (currentMode === 'countdown') remainingSeconds = targetCountdownSeconds;
-            else elapsedSeconds = 0;
+            startBtn.textContent = i18n[currentLang].btnStart;
+
+            if (currentMode === 'countdown') {
+                applySelectedCountdownTime(); // 重新重置为完整设置时长（例如 25:00）
+            } else {
+                elapsedSeconds = 0;           // 正计时重置为 00:00
+            }
             updateTimerDisplay();
         }
 
-        // --- 抽卡盲盒 & 成果结算 ---
+        // --- 完成专注与数据处理 ---
         function rollGachaPlant() {
             const rand = Math.random();
             if (rand < 0.05) {
@@ -844,15 +1092,10 @@
         }
 
         function completeFocusSession(durationMinutes) {
-            clearInterval(timerInterval);
-            stopPauseMonitor();
-            isRunning = false;
-            startBtn.textContent = i18nData[currentLang].start;
-
             playChimeSound();
 
-            const task = taskInput.value.trim() || '日常专注';
-            const mood = moodInput.value.trim() || '平静';
+            const task = taskInput.value.trim() || i18n[currentLang].defaultTask;
+            const mood = moodInput.value.trim() || i18n[currentLang].defaultMood;
             const plant = rollGachaPlant();
 
             const record = {
@@ -865,33 +1108,187 @@
             };
 
             focusHistory.push(record);
-            localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
-
-            renderGarden();
-            renderHeatmap();
+            saveAndRefreshAll();
             openShareModal(record);
 
-            if (currentMode === 'countdown') remainingSeconds = targetCountdownSeconds;
-            else elapsedSeconds = 0;
-            updateTimerDisplay();
+            // 核心：任务完成后自动重置UI，为下一轮做准备
+            resetTimerState();
         }
 
+        function saveAndRefreshAll() {
+            localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
+            renderGarden();
+            renderHeatmap();
+            renderLogList();
+            renderPieChart();
+        }
+
+        // --- 点击植物查看详情 ---
         function renderGarden() {
             gardenGrid.innerHTML = '';
-            focusHistory.forEach(item => {
+            focusHistory.forEach((item) => {
                 const badge = document.createElement('div');
                 badge.className = 'plant-badge';
                 badge.textContent = item.plant;
-                badge.title = `${new Date(item.date).toLocaleDateString()}: ${item.task} (${item.duration}分钟)`;
+                badge.onclick = () => openPlantDetailModal(item);
                 gardenGrid.appendChild(badge);
             });
         }
 
-        // --- 真实的 GitHub-Style 历史热力图 ---
+        function openPlantDetailModal(item) {
+            document.getElementById('detailPlantIcon').textContent = item.plant;
+            document.getElementById('detailTask').textContent = item.task;
+            document.getElementById('detailDuration').textContent = item.duration;
+            document.getElementById('detailMood').textContent = item.mood;
+            document.getElementById('detailDate').textContent = new Date(item.date).toLocaleString(currentLang === 'zh' ? 'zh-CN' : 'en-US');
+            document.getElementById('plantDetailModal').classList.add('active');
+        }
+
+        function closePlantDetailModal() {
+            document.getElementById('plantDetailModal').classList.remove('active');
+        }
+
+        // --- 明细记录列表 ---
+        function renderLogList() {
+            const listEl = document.getElementById('logList');
+            if (focusHistory.length === 0) {
+                listEl.innerHTML = `<p style="font-size:0.82rem; color:var(--text-sub); text-align:center;">${i18n[currentLang].noLog}</p>`;
+                return;
+            }
+            listEl.innerHTML = '';
+            [...focusHistory].reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'log-item';
+                const langLocale = currentLang === 'zh' ? 'zh-CN' : 'en-US';
+                const timeStr = new Date(item.date).toLocaleDateString(langLocale) + ' ' + new Date(item.date).toLocaleTimeString(langLocale, {hour: '2-digit', minute:'2-digit'});
+                div.innerHTML = `
+                    <div>
+                        <strong>${item.plant} ${item.task}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-sub);">${timeStr} · Mood: ${item.mood}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:600; color:var(--accent-sage);">${item.duration} ${i18n[currentLang].unitMinutes}</span>
+                        <button style="border:none; background:transparent; color:#e11d48; cursor:pointer; font-size:0.8rem; padding:2px 4px;" onclick="deleteLogRecord(${item.id})">✕</button>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        function deleteLogRecord(id) {
+            if (confirm(i18n[currentLang].confirmDelete)) {
+                focusHistory = focusHistory.filter(item => item.id !== id);
+                saveAndRefreshAll();
+            }
+        }
+
+        // --- 饼状图统计 ---
+        function switchStatsPeriod(period) {
+            currentStatsPeriod = period;
+            document.getElementById('btnStatsDay').classList.toggle('active', period === 'day');
+            document.getElementById('btnStatsWeek').classList.toggle('active', period === 'week');
+            document.getElementById('btnStatsMonth').classList.toggle('active', period === 'month');
+            renderPieChart();
+        }
+
+        function renderPieChart() {
+            const now = new Date();
+            let filteredHistory = focusHistory.filter(item => {
+                const itemDate = new Date(item.date);
+                if (currentStatsPeriod === 'day') {
+                    return itemDate.toDateString() === now.toDateString();
+                } else if (currentStatsPeriod === 'week') {
+                    const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24);
+                    return diffDays <= 7;
+                } else if (currentStatsPeriod === 'month') {
+                    return itemDate.getFullYear() === now.getFullYear() && itemDate.getMonth() === now.getMonth();
+                }
+                return true;
+            });
+
+            const taskMap = {};
+            filteredHistory.forEach(item => {
+                taskMap[item.task] = (taskMap[item.task] || 0) + item.duration;
+            });
+
+            const labels = Object.keys(taskMap);
+            const dataValues = Object.values(taskMap);
+
+            const ctx = document.getElementById('taskPieChart').getContext('2d');
+            if (pieChartInstance) pieChartInstance.destroy();
+
+            if (labels.length === 0) {
+                pieChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [i18n[currentLang].noData],
+                        datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                return;
+            }
+
+            const chartColors = ['#5b8266', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];
+
+            pieChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: chartColors.slice(0, labels.length)
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.raw} ${i18n[currentLang].unitMinutes}` } }
+                    }
+                }
+            });
+        }
+
+        // --- 免费外部 AI 图生成服务 (使用开放的 Pollinations.AI API) ---
+        function fetchFreeAIPicture() {
+            const box = document.getElementById('aiImgBox');
+            const statusText = document.getElementById('aiStatus');
+            const aiImg = document.getElementById('aiResultImg');
+
+            box.style.display = 'flex';
+            statusText.style.display = 'block';
+            aiImg.style.display = 'none';
+            statusText.textContent = i18n[currentLang].aiGenerating;
+
+            const userTask = taskInput.value.trim();
+            const userMood = moodInput.value.trim();
+            
+            // 构建英文 Prompt，确保生成高质感的护眼自然风景
+            const basePrompt = "peaceful green nature landscape, eye protection soft colors, calming forest lake, 8k resolution, photorealistic, fantasy style";
+            const fullPrompt = `${userTask || userMood ? userTask + " " + userMood + "," : ""} ${basePrompt}`;
+            
+            const seed = Math.floor(Math.random() * 10000);
+            const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?seed=${seed}&width=600&height=300&nologo=true`;
+
+            // 预加载图片
+            const imgLoader = new Image();
+            imgLoader.src = apiUrl;
+            imgLoader.onload = () => {
+                aiImg.src = apiUrl;
+                statusText.style.display = 'none';
+                aiImg.style.display = 'block';
+            };
+            imgLoader.onerror = () => {
+                statusText.textContent = i18n[currentLang].aiFail;
+            };
+        }
+
+        // --- 热力图渲染 ---
         function renderHeatmap() {
             const heatmap = document.getElementById('heatmap');
             heatmap.innerHTML = '';
-
             const today = new Date();
             const daysMap = {};
 
@@ -908,7 +1305,7 @@
 
                 const cell = document.createElement('div');
                 cell.className = 'heatmap-cell';
-                cell.title = `${dStr}: ${minutes} 分钟`;
+                cell.title = `${dStr}: ${minutes} ${i18n[currentLang].unitMinutes}`;
 
                 if (minutes > 0 && minutes <= 25) cell.setAttribute('data-level', '1');
                 else if (minutes > 25 && minutes <= 60) cell.setAttribute('data-level', '2');
@@ -919,7 +1316,7 @@
             }
         }
 
-        // --- Web Audio API 高保真音效实现 ---
+        // --- Web Audio API 声音环境 ---
         let audioCtx = null;
         let rainSource = null, rainGain = null;
         let windSource = null, windGain = null;
@@ -959,16 +1356,11 @@
                 lowpass.type = 'lowpass';
                 lowpass.frequency.value = 1000;
 
-                const highpass = audioCtx.createBiquadFilter();
-                highpass.type = 'highpass';
-                highpass.frequency.value = 400;
-
                 rainGain = audioCtx.createGain();
                 rainGain.gain.value = document.getElementById('rainVol').value;
 
                 rainSource.connect(lowpass);
-                lowpass.connect(highpass);
-                highpass.connect(rainGain);
+                lowpass.connect(rainGain);
                 rainGain.connect(audioCtx.destination);
                 rainSource.start();
             } else if (rainSource) {
@@ -996,15 +1388,6 @@
                 const bandpass = audioCtx.createBiquadFilter();
                 bandpass.type = 'bandpass';
                 bandpass.frequency.value = 350;
-                bandpass.Q.value = 3.0;
-
-                const lfo = audioCtx.createOscillator();
-                lfo.frequency.value = 0.2;
-                const lfoGain = audioCtx.createGain();
-                lfoGain.gain.value = 150;
-                lfo.connect(lfoGain);
-                lfoGain.connect(bandpass.frequency);
-                lfo.start();
 
                 windGain = audioCtx.createGain();
                 windGain.gain.value = document.getElementById('windVol').value;
@@ -1023,7 +1406,7 @@
             if (windGain) windGain.gain.value = e.target.value;
         });
 
-        // 切换为夜间模式（全面适配文字清晰度）
+        // 日夜主题切换
         document.getElementById('presetNight').addEventListener('click', () => {
             document.documentElement.style.setProperty('--bg-gradient', 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)');
             document.documentElement.style.setProperty('--bg-color', '#0f172a');
@@ -1035,7 +1418,6 @@
             document.documentElement.style.setProperty('--accent-sage', '#38bdf8');
         });
 
-        // 切换为日间模式
         document.getElementById('presetDay').addEventListener('click', () => {
             document.documentElement.style.setProperty('--bg-gradient', 'radial-gradient(circle at 50% 0%, #e2eee7 0%, #f2f7f4 100%)');
             document.documentElement.style.setProperty('--bg-color', '#f2f7f4');
@@ -1047,54 +1429,7 @@
             document.documentElement.style.setProperty('--accent-sage', '#5b8266');
         });
 
-        // --- 生成整只可爱小动物相关 AI 意境图 ---
-        const animalList = ['cute cat', 'cute red panda', 'cute bunny', 'cute capybara', 'cute shiba inu', 'cute penguin', 'cute hamster'];
-
-        function triggerAIGeneration() {
-            const box = document.getElementById('aiImgBox');
-            const statusText = document.getElementById('aiStatus');
-            
-            box.style.display = 'flex';
-            statusText.style.display = 'block';
-            statusText.textContent = i18nData[currentLang].ai_loading;
-            
-            const oldImg = box.querySelector('img');
-            if (oldImg) oldImg.remove();
-
-            const taskText = taskInput.value.trim() || 'focusing';
-            
-            // 随机挑选一种可爱动物
-            const randomAnimal = animalList[Math.floor(Math.random() * animalList.length)];
-            
-            // 强化关键字，确保动物形态完整无缺陷、画风可爱色彩绚丽
-            const animalPrompt = `full body photo of a single cute ${randomAnimal} doing ${taskText}, adorable, colorful, vibrant lighting, highly detailed, full shot, complete body, masterpiece`;
-            const finalQuery = encodeURIComponent(animalPrompt);
-            const imgUrl = `https://source.unsplash.com/800x400/?${finalQuery}&sig=${Date.now()}`;
-
-            const img = new Image();
-            img.src = imgUrl;
-            img.alt = `${taskText} Cute Animal Vibe`;
-            
-            img.onload = () => {
-                statusText.style.display = 'none';
-                box.appendChild(img);
-            };
-
-            img.onerror = () => {
-                statusText.style.display = 'none';
-                box.innerHTML = `
-                    <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; 
-                                background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #2d3732; font-weight: 600; padding: 12px; text-align: center;">
-                        <span style="font-size: 1.2rem; margin-bottom: 4px;">🐱 专注伙伴提醒：“${taskText}”</span>
-                        <span style="font-size: 0.85rem; opacity: 0.8;">可爱小动物正在默默陪你努力，加油！</span>
-                    </div>`;
-            };
-        }
-
-        document.getElementById('zenBtn').addEventListener('click', () => document.getElementById('zenOverlay').classList.add('active'));
-        document.getElementById('zenExit').addEventListener('click', () => document.getElementById('zenOverlay').classList.remove('active'));
-
-        // --- 数据导出/导入 ---
+        // 导入导出 JSON
         document.getElementById('exportBtn').addEventListener('click', () => {
             const blob = new Blob([JSON.stringify(focusHistory)], { type: 'application/json' });
             const a = document.createElement('a');
@@ -1108,24 +1443,22 @@
             const reader = new FileReader();
             reader.onload = (evt) => {
                 focusHistory = JSON.parse(evt.target.result);
-                localStorage.setItem('zen_focus_history', JSON.stringify(focusHistory));
-                renderGarden();
-                renderHeatmap();
+                saveAndRefreshAll();
             };
             reader.readAsText(e.target.files[0]);
         });
 
-        // --- 模态框分享 ---
+        // 分享 Modal
         function openShareModal(record) {
             document.getElementById('cardPlantIcon').textContent = record.plant;
             document.getElementById('cardTask').textContent = record.task;
             document.getElementById('cardDuration').textContent = record.duration;
             document.getElementById('cardMood').textContent = record.mood;
-            document.getElementById('cardDate').textContent = new Date(record.date).toLocaleString('zh-CN');
+            document.getElementById('cardDate').textContent = new Date(record.date).toLocaleDateString(currentLang === 'zh' ? 'zh-CN' : 'en-US');
             document.getElementById('shareModal').classList.add('active');
         }
 
-        function closeModal() { document.getElementById('shareModal').classList.remove('active'); }
+        function closeShareModal() { document.getElementById('shareModal').classList.remove('active'); }
 
         function downloadCardImage() {
             const cardElem = document.getElementById('captureCard');
@@ -1137,9 +1470,9 @@
             });
         }
 
-        // 初始化渲染
-        renderGarden();
-        renderHeatmap();
+        // 初始化加载
+        initTimeSelectOptions();
+        saveAndRefreshAll();
     </script>
 </body>
 </html>
